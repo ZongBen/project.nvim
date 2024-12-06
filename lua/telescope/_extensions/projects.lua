@@ -72,6 +72,12 @@ local function change_working_directory(prompt_bufnr, prompt)
     actions.close(prompt_bufnr)
   end
   local cd_successful = project.set_pwd(project_path, "telescope")
+
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(bufnr) then
+      vim.api.nvim_buf_delete(bufnr, { force = false })
+    end
+  end
   return project_path, cd_successful
 end
 
