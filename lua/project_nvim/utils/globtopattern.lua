@@ -27,8 +27,8 @@ function M.globtopattern(g)
   end
 
   -- escape pattern char
-  local function escape(c)
-    return c:match("^%w$") and c or "%" .. c
+  local function escape(char)
+    return char:match("^%w$") and char or "%" .. char
   end
 
   -- Convert tokens at end of charset.

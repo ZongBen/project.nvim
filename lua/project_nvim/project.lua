@@ -12,8 +12,8 @@ M.last_project = nil
 function M.find_lsp_root()
   -- Get lsp client for current buffer
   -- Returns nil or string
-  local buf_ft = vim.api.nvim_buf_get_option(0, "filetype")
-  local clients = vim.lsp.buf_get_clients()
+  local buf_ft = vim.api.nvim_get_option_value("filetype", { buf = 0 })
+  local clients = vim.lsp.get_clients({ bufnr = 0 })
   if next(clients) == nil then
     return nil
   end
@@ -39,12 +39,12 @@ function M.find_pattern_root()
   local last_dir_cache = ""
   local curr_dir_cache = {}
 
-  local function get_parent(path)
-    path = path:match("^(.*)/")
-    if path == "" then
-      path = "/"
+  local function get_parent(p)
+    p = p:match("^(.*)/")
+    if p == "" then
+      p = "/"
     end
-    return path
+    return p
   end
 
   local function get_files(file_dir)
@@ -72,22 +72,22 @@ function M.find_pattern_root()
   end
 
   local function sub(dir, identifier)
-    local path = get_parent(dir)
+    local p = get_parent(dir)
     while true do
-      if is(path, identifier) then
+      if is(p, identifier) then
         return true
       end
-      local current = path
-      path = get_parent(path)
-      if current == path then
+      local current = p
+      p = get_parent(p)
+      if current == p then
         return false
       end
     end
   end
 
   local function child(dir, identifier)
-    local path = get_parent(dir)
-    return is(path, identifier)
+    local p = get_parent(dir)
+    return is(p, identifier)
   end
 
   local function has(dir, identifier)
@@ -160,7 +160,9 @@ function M.attach_to_lsp()
       local _on_attach = lsp_config.on_attach
       lsp_config.on_attach = function(client, bufnr)
         on_attach_lsp(client, bufnr)
-        _on_attach(client, bufnr)
+        if _on_attach ~= nil then
+          _on_attach(client, bufnr)
+        end
       end
     end
     return _start_client(lsp_config)
@@ -176,12 +178,12 @@ function M.set_pwd(dir, method)
 
     if vim.fn.getcwd() ~= dir then
       local scope_chdir = config.options.scope_chdir
-      if scope_chdir == 'global' then
+      if scope_chdir == "global" then
         vim.api.nvim_set_current_dir(dir)
-      elseif scope_chdir == 'tab' then
-        vim.cmd('tcd ' .. dir)
-      elseif scope_chdir == 'win' then
-        vim.cmd('lcd ' .. dir)
+      elseif scope_chdir == "tab" then
+        vim.cmd("tcd " .. dir)
+      elseif scope_chdir == "win" then
+        vim.cmd("lcd " .. dir)
       else
         return
       end
@@ -214,7 +216,7 @@ function M.get_project_root()
 end
 
 function M.is_file()
-  local buf_type = vim.api.nvim_buf_get_option(0, "buftype")
+  local buf_type = vim.api.nvim_get_option_value("filetype", { buf = 0 })
 
   local whitelisted_buf_type = { "", "acwrite" }
   local is_in_whitelist = false
@@ -251,7 +253,7 @@ end
 
 function M.add_project_manually()
   local current_dir = vim.fn.expand("%:p:h", true)
-  M.set_pwd(current_dir, 'manual')
+  M.set_pwd(current_dir, "manual")
 end
 
 function M.init()

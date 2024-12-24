@@ -43,10 +43,15 @@ M.defaults = {
 
   -- When set to false, you will get a confirmation message that asks you if you want to delete the buffers.
   force_chdir = false,
+
+  -- Telescope initial mode
+  -- * normal
+  -- * insert
+  initial_mode = "normal",
 }
 
 ---@type ProjectOptions
-M.options = {}
+M.options = nil or {}
 
 M.setup = function(options)
   M.options = vim.tbl_deep_extend("force", M.defaults, options or {})

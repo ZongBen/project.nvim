@@ -67,18 +67,14 @@ local function delete_buffers()
   end
 end
 
-local function change_working_directory(prompt_bufnr, prompt)
-  local selected_entry = state.get_selected_entry(prompt_bufnr)
+local function change_working_directory(prompt_bufnr)
+  local selected_entry = state.get_selected_entry()
   if selected_entry == nil then
     actions.close(prompt_bufnr)
     return
   end
   local project_path = selected_entry.value
-  if prompt == true then
-    actions._close(prompt_bufnr, true)
-  else
-    actions.close(prompt_bufnr)
-  end
+  actions.close(prompt_bufnr)
   local cd_successful = project.set_pwd(project_path, "telescope")
   if cd_successful then
     delete_buffers()
@@ -87,7 +83,7 @@ local function change_working_directory(prompt_bufnr, prompt)
 end
 
 local function find_project_files(prompt_bufnr)
-  local project_path, cd_successful = change_working_directory(prompt_bufnr, true)
+  local project_path, cd_successful = change_working_directory(prompt_bufnr)
   local opt = {
     cwd = project_path,
     hidden = config.options.show_hidden,
@@ -99,7 +95,7 @@ local function find_project_files(prompt_bufnr)
 end
 
 local function browse_project_files(prompt_bufnr)
-  local project_path, cd_successful = change_working_directory(prompt_bufnr, true)
+  local project_path, cd_successful = change_working_directory(prompt_bufnr)
   local opt = {
     cwd = project_path,
     hidden = config.options.show_hidden,
@@ -110,7 +106,7 @@ local function browse_project_files(prompt_bufnr)
 end
 
 local function search_in_project_files(prompt_bufnr)
-  local project_path, cd_successful = change_working_directory(prompt_bufnr, true)
+  local project_path, cd_successful = change_working_directory(prompt_bufnr)
   local opt = {
     cwd = project_path,
     hidden = config.options.show_hidden,
@@ -122,7 +118,7 @@ local function search_in_project_files(prompt_bufnr)
 end
 
 local function recent_project_files(prompt_bufnr)
-  local _, cd_successful = change_working_directory(prompt_bufnr, true)
+  local _, cd_successful = change_working_directory(prompt_bufnr)
   local opt = {
     cwd_only = true,
     hidden = config.options.show_hidden,
@@ -133,7 +129,7 @@ local function recent_project_files(prompt_bufnr)
 end
 
 local function delete_project(prompt_bufnr)
-  local selectedEntry = state.get_selected_entry(prompt_bufnr)
+  local selectedEntry = state.get_selected_entry()
   if selectedEntry == nil then
     actions.close(prompt_bufnr)
     return
@@ -155,33 +151,36 @@ end
 local function projects(opts)
   opts = opts or {}
 
-  pickers.new(opts, {
-    prompt_title = "Recent Projects",
-    finder = create_finder(),
-    previewer = false,
-    sorter = telescope_config.generic_sorter(opts),
-    attach_mappings = function(prompt_bufnr, map)
-      map("n", "f", find_project_files)
-      map("n", "b", browse_project_files)
-      map("n", "d", delete_project)
-      map("n", "s", search_in_project_files)
-      map("n", "r", recent_project_files)
-      map("n", "w", change_working_directory)
+  pickers
+    .new(opts, {
+      initial_mode = config.options.initial_mode,
+      prompt_title = "Recent Projects",
+      finder = create_finder(),
+      previewer = false,
+      sorter = telescope_config.generic_sorter(opts),
+      attach_mappings = function(prompt_bufnr, map)
+        map("n", "f", find_project_files)
+        map("n", "b", browse_project_files)
+        map("n", "d", delete_project)
+        map("n", "s", search_in_project_files)
+        map("n", "r", recent_project_files)
+        map("n", "w", change_working_directory)
 
-      map("i", "<c-f>", find_project_files)
-      map("i", "<c-b>", browse_project_files)
-      map("i", "<c-d>", delete_project)
-      map("i", "<c-s>", search_in_project_files)
-      map("i", "<c-r>", recent_project_files)
-      map("i", "<c-w>", change_working_directory)
+        map("i", "<c-f>", find_project_files)
+        map("i", "<c-b>", browse_project_files)
+        map("i", "<c-d>", delete_project)
+        map("i", "<c-s>", search_in_project_files)
+        map("i", "<c-r>", recent_project_files)
+        map("i", "<c-w>", change_working_directory)
 
-      local on_project_selected = function()
-        find_project_files(prompt_bufnr)
-      end
-      actions.select_default:replace(on_project_selected)
-      return true
-    end,
-  }):find()
+        local on_project_selected = function()
+          find_project_files(prompt_bufnr)
+        end
+        actions.select_default:replace(on_project_selected)
+        return true
+      end,
+    })
+    :find()
 end
 
 return telescope.register_extension({
